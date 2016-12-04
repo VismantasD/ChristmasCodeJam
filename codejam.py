@@ -48,7 +48,7 @@ def submit():
     r = c.execute("select teamid, secret from teams where name='{}'".format(teamname))
     row = r.fetchone()
     if row[1] <>secret:
-        return "Wrong Password"
+        return "Wrong Password", 401
     c.execute("insert into entries (teamid, entry) values ({}, '{}')".format(row[0], predictions))
     db.commit()
     x = destringifynp(predictions)
