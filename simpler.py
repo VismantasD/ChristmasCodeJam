@@ -9,12 +9,16 @@ def stringifynp(x):
     output.seek(0)
     return base64.b64encode(output.read())
 
+def submit(name, secret, predictions):
+    payload = {
+        'teamname': name,
+        'secret': secret,
+        'predictions': stringifynp(predictions)
+        }
+    r = requests.post('http://localhost:5000/submit', json=payload)
+    return r.text
+
+
 
 x = np.random.random((10,10,2, 3, 4))
-payload = {
-        'teamname': 'Happy Feet',
-        'predictions': stringifynp(x)
-        }
-r = requests.post('http://localhost:5000/submit', json=payload)
-print x
-print r.text
+print submit('Norns', 5781, x)

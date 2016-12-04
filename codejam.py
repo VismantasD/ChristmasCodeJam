@@ -4,6 +4,7 @@ from sqlite3 import dbapi2 as sqlite3
 import numpy as np
 import base64
 import StringIO
+import random
 
 app = Flask(__name__)
 
@@ -40,9 +41,31 @@ def leaderboard():
 def submit():
     r = request.get_json()
     teamname = r['teamname']
+    secret = r['secret']
     predictions=np.array(r['predictions'])
+    db = get_db()
+    c = db.cursor()
+    r = c.execute("select teamid, secret from teams where name='{}'".format(teamname))
+    row = r.fetchone()
+    if row[1] <>secret:
+        return "Wrong Password"
+    c.execute("insert into entries (teamid, entry) values ({}, '{}')".format(row[0], predictions))
+    db.commit()
     x = destringifynp(predictions)
     return 'Happy shape {} from team {}'.format(x.shape, teamname)
+@app.route('/list/<name>')
+
+def listSubmissions(name):
+    db = get_db()
+    c = db.cursor()
+    print name
+    rows = c.execute("select * from entries inner join teams on entries.teamid=teams.teamid where teams.name='{}'".format(name))
+    r = ""
+    for row in rows:
+        print row
+        r += row['entry'] 
+    return r
+
 
 @app.route('/register', methods=['POST', 'GET'])
 def register():
@@ -60,9 +83,10 @@ def register():
     else:
         db = get_db()
         c = db.cursor()
-        c.execute("insert into teams (name) values ('{}')".format(request.form['teamname']))
+        secret = random.randrange(1000,9999+1)
+        c.execute("insert into teams (name, secret) values ('{}', {})".format(request.form['teamname'], secret))
         db.commit()
-        return "registering team: {}".format(request.form['teamname'])
+        return "registering team: {}. Secret key: {}".format(request.form['teamname'], secret)
 
 
 
